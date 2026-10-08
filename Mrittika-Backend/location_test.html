@@ -1,0 +1,330 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Mrittika AI</title>
+
+</head>
+
+
+<body>
+
+    <h1>Mrittika AI</h1>
+
+    <h2>Smart Crop Recommendation</h2>
+
+
+    <label>Nitrogen (N):</label>
+
+    <input
+        type="number"
+        id="N"
+        value="90"
+    >
+
+    <br><br>
+
+
+    <label>Phosphorus (P):</label>
+
+    <input
+        type="number"
+        id="P"
+        value="42"
+    >
+
+    <br><br>
+
+
+    <label>Potassium (K):</label>
+
+    <input
+        type="number"
+        id="K"
+        value="43"
+    >
+
+    <br><br>
+
+
+    <label>Soil pH:</label>
+
+    <input
+        type="number"
+        id="ph"
+        value="6.5"
+        step="0.1"
+    >
+
+    <br><br>
+
+
+    <button onclick="predictCrop()">
+
+        🌾 Predict Best Crop
+
+    </button>
+
+
+    <h3>Result</h3>
+
+    <pre id="result"></pre>
+
+
+    <script>
+
+        function predictCrop() {
+
+            const resultBox =
+                document.getElementById("result");
+
+
+            resultBox.innerText =
+                "📍 Detecting your location...";
+
+
+            navigator.geolocation.getCurrentPosition(
+
+                async function(position) {
+
+
+                    // --------------------------------
+                    // GET GPS LOCATION
+                    // --------------------------------
+
+                    const latitude =
+                        position.coords.latitude;
+
+                    const longitude =
+                        position.coords.longitude;
+
+
+                    // --------------------------------
+                    // SHOW GPS LOCATION
+                    // --------------------------------
+
+                    alert(
+                        "📍 Your GPS Location\n\n" +
+                        "Latitude: " + latitude +
+                        "\nLongitude: " + longitude
+                    );
+
+
+                    resultBox.innerText =
+                        "🌦️ Getting weather and predicting crop...";
+
+
+                    // --------------------------------
+                    // GET SOIL VALUES
+                    // --------------------------------
+
+                    const data = {
+
+                        N: parseFloat(
+                            document.getElementById("N").value
+                        ),
+
+                        P: parseFloat(
+                            document.getElementById("P").value
+                        ),
+
+                        K: parseFloat(
+                            document.getElementById("K").value
+                        ),
+
+                        ph: parseFloat(
+                            document.getElementById("ph").value
+                        ),
+
+
+                        // GPS values
+
+                        latitude: latitude,
+
+                        longitude: longitude
+
+                    };
+
+
+                    // --------------------------------
+                    // SEND DATA TO FASTAPI
+                    // --------------------------------
+
+                    try {
+
+                        const response = await fetch(
+
+                            "http://127.0.0.1:8000/api/v1/smart-crop-predict",
+
+                            {
+
+                                method: "POST",
+
+                                headers: {
+
+                                    "Content-Type":
+                                        "application/json"
+
+                                },
+
+                                body:
+                                    JSON.stringify(data)
+
+                            }
+
+                        );
+
+
+                        // --------------------------------
+                        // GET BACKEND RESPONSE
+                        // --------------------------------
+
+                        const result =
+                            await response.json();
+
+
+                        // --------------------------------
+                        // HANDLE BACKEND ERROR
+                        // --------------------------------
+
+                        if (!result.success) {
+
+                            resultBox.innerText =
+                                "❌ " + result.message;
+
+                            return;
+
+                        }
+
+
+                        // --------------------------------
+                        // SHOW COMPLETE RESULT
+                        // --------------------------------
+
+                        resultBox.innerText =
+
+                            "🌱 CROP PREDICTION\n\n" +
+
+                            "📍 LOCATION\n" +
+
+                            "Latitude: " +
+                            result.latitude +
+
+                            "\nLongitude: " +
+                            result.longitude +
+
+                            "\n\n" +
+
+                            "🌦️ WEATHER\n" +
+
+                            "Temperature: " +
+                            result.weather.temperature +
+                            " °C\n" +
+
+                            "Humidity: " +
+                            result.weather.humidity +
+                            " %\n" +
+
+                            "Rainfall: " +
+                            result.weather.rainfall +
+                            " mm\n\n" +
+
+                            "🌱 SOIL\n" +
+
+                            "N: " +
+                            result.soil.N +
+
+                            "\nP: " +
+                            result.soil.P +
+
+                            "\nK: " +
+                            result.soil.K +
+
+                            "\npH: " +
+                            result.soil.pH +
+
+                            "\n\n" +
+
+                            "🌾 RECOMMENDED CROP\n" +
+
+                            result.prediction.recommended_crop +
+
+                            "\n\n" +
+
+                            "🏆 TOP 3 CROPS\n\n" +
+
+                            JSON.stringify(
+                                result.prediction.top_3,
+                                null,
+                                2
+                            );
+
+
+                    }
+
+
+                    catch (error) {
+
+
+                        resultBox.innerText =
+
+                            "❌ Could not connect to backend.\n\n" +
+
+                            "Make sure FastAPI is running.";
+
+
+                        console.error(error);
+
+                    }
+
+                },
+
+
+                // --------------------------------
+                // GPS ERROR
+                // --------------------------------
+
+                function(error) {
+
+                    if (error.code === 1) {
+
+                        resultBox.innerText =
+                            "❌ Location permission denied.";
+
+                    }
+
+                    else if (error.code === 2) {
+
+                        resultBox.innerText =
+                            "❌ Location unavailable.";
+
+                    }
+
+                    else if (error.code === 3) {
+
+                        resultBox.innerText =
+                            "❌ Location request timed out.";
+
+                    }
+
+                    else {
+
+                        resultBox.innerText =
+                            "❌ Unable to detect location.";
+
+                    }
+
+                }
+
+            );
+
+        }
+
+    </script>
+
+
+</body>
+
+</html>
