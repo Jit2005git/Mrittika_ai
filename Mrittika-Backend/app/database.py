@@ -9,10 +9,27 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+engine = None
 
-engine = create_engine(
-    DATABASE_URL
-)
+if DATABASE_URL:
+    try:
+        connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+        test_engine = create_engine(
+            DATABASE_URL,
+            connect_args=connect_args
+        )
+        with test_engine.connect():
+            pass
+        engine = test_engine
+    except Exception:
+        engine = None
+
+if engine is None:
+    DATABASE_URL = "sqlite:///./mrittika.db"
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False}
+    )
 
 
 SessionLocal = sessionmaker(

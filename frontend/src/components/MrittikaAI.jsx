@@ -3,7 +3,6 @@ import {
   Sparkles,
   Bot,
   HelpCircle,
-  ArrowRight,
   CheckCircle2,
   AlertCircle,
   Layers,
@@ -11,6 +10,11 @@ import {
   ListChecks,
   RotateCcw,
   ShieldAlert,
+  Thermometer,
+  Droplets,
+  CloudRain,
+  MapPin,
+  Beaker,
 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import LoadingSpinner from './LoadingSpinner';
@@ -35,10 +39,10 @@ export const MrittikaAI = ({
     const prefix = `ai.result.${key}`;
 
     return {
-      why: t(`${prefix}Why`, t('ai.result.riceWhy')),
-      soil: t(`${prefix}Soil`, t('ai.result.riceSoil')),
-      weather: t(`${prefix}Weather`, t('ai.result.riceWeather')),
-      next: t(`${prefix}Next`, t('ai.result.riceNext')),
+      why: t(`${prefix}Why`, t('ai.result.riceWhy', 'The tested soil and climate conditions provide high nutrient availability and thermal stability for this crop.')),
+      soil: t(`${prefix}Soil`, t('ai.result.riceSoil', 'Soil N-P-K nutrient ratios and pH balance closely match the root development requirements.')),
+      weather: t(`${prefix}Weather`, t('ai.result.riceWeather', 'Atmospheric temperature and moisture trends support active germination and vegetative development.')),
+      next: t(`${prefix}Next`, t('ai.result.riceNext', 'Prepare seedbed with light tilling, verify basal fertilizer dosages, and align planting with seasonal rains.')),
     };
   };
 
@@ -75,7 +79,9 @@ export const MrittikaAI = ({
                 </span>
               </div>
               <p className="text-xs text-emerald-100/90 mt-0.5">
-                {t('ai.badge', 'Agro-Intelligence Assistant')}
+                {result?.mode === 'smart'
+                  ? 'Live GPS Smart Agro-Intelligence'
+                  : t('ai.badge', 'Agro-Intelligence Assistant')}
               </p>
             </div>
           </div>
@@ -108,7 +114,7 @@ export const MrittikaAI = ({
                 {t('common.processing', 'Processing...')}
               </h4>
               <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
-                "{t('ai.states.loading', 'Let me check your soil and weather conditions...')}"
+                "{t('ai.states.loading', 'Fetching live weather and evaluating your soil conditions with Mrittika AI models...')}"
               </p>
             </div>
           </div>
@@ -146,7 +152,7 @@ export const MrittikaAI = ({
               {t('ai.assistantName', 'Mrittika AI')}
             </h4>
             <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto leading-relaxed">
-              "{t('ai.states.empty', 'Enter your soil and weather information above, and I will help you choose a suitable crop for your land.')}"
+              "{t('ai.states.empty', 'Enter your soil nutrients and location coordinates above, and I will recommend the highest-yielding crop for your land.')}"
             </p>
           </div>
         )}
@@ -163,7 +169,7 @@ export const MrittikaAI = ({
                     {t('ai.assistantName', 'Mrittika AI')} says:
                   </span>
                   <p className="text-xs sm:text-sm leading-relaxed text-slate-700">
-                    "{t('ai.states.success', "Based on the soil and weather conditions you provided, here's what I'd recommend:")}"
+                    "{t('ai.states.success', "Based on your soil chemistry and local meteorological conditions, here is your optimal crop recommendation:")}"
                   </p>
                 </div>
               </div>
@@ -224,6 +230,114 @@ export const MrittikaAI = ({
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* TOP 3 ALTERNATIVE CROPS & PROBABILITIES */}
+            {result.top_3 && result.top_3.length > 0 && (
+              <div className="rounded-2xl p-4 sm:p-5 bg-slate-50 border border-slate-200/80 shadow-2xs">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-emerald-600" />
+                    <span>Top 3 Cultivar Probabilities</span>
+                  </h4>
+                  <span className="text-3xs uppercase font-extrabold text-slate-500">
+                    Random Forest Multi-Class
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  {result.top_3.map((item, idx) => (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-bold text-slate-800 capitalize flex items-center gap-1.5">
+                          <span className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 text-3xs font-black inline-flex items-center justify-center">
+                            {idx + 1}
+                          </span>
+                          <span>{item.crop}</span>
+                        </span>
+                        <span className="font-mono text-xs font-bold text-emerald-700">
+                          {item.percentage}% ({item.probability})
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-200/80 rounded-full h-2.5 overflow-hidden">
+                        <div
+                          className={`h-2.5 rounded-full transition-all duration-700 ${
+                            idx === 0
+                              ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                              : idx === 1
+                              ? 'bg-gradient-to-r from-teal-400 to-cyan-500'
+                              : 'bg-gradient-to-r from-slate-400 to-slate-500'
+                          }`}
+                          style={{ width: `${Math.max(item.percentage, 4)}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ENVIRONMENTAL & SOIL TELEMETRY SECTION */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Weather Telemetry */}
+              {result.weather && (
+                <div className="rounded-2xl p-4 bg-teal-50/60 border border-teal-200/80 text-xs">
+                  <div className="flex items-center justify-between gap-2 mb-2.5">
+                    <h5 className="font-bold text-teal-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <CloudSun className="w-4 h-4 text-teal-600" />
+                      <span>Live Weather Evaluated</span>
+                    </h5>
+                    {result.latitude && result.longitude && (
+                      <span className="text-3xs font-mono text-teal-700 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-teal-600" />
+                        {result.latitude}, {result.longitude}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                    <div className="p-2 rounded-xl bg-white border border-teal-200/50 shadow-2xs">
+                      <span className="text-3xs text-slate-500 block">Temperature</span>
+                      <strong className="text-sm text-teal-900 block mt-0.5">{result.weather.temperature}°C</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-white border border-teal-200/50 shadow-2xs">
+                      <span className="text-3xs text-slate-500 block">Humidity</span>
+                      <strong className="text-sm text-teal-900 block mt-0.5">{result.weather.humidity}%</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-white border border-teal-200/50 shadow-2xs">
+                      <span className="text-3xs text-slate-500 block">Rainfall</span>
+                      <strong className="text-sm text-teal-900 block mt-0.5">{result.weather.rainfall} mm</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Soil Telemetry */}
+              {result.soil && (
+                <div className="rounded-2xl p-4 bg-amber-50/60 border border-amber-200/80 text-xs">
+                  <h5 className="font-bold text-amber-950 flex items-center gap-1.5 uppercase tracking-wide mb-2.5">
+                    <Beaker className="w-4 h-4 text-amber-600" />
+                    <span>Soil Chemistries Evaluated</span>
+                  </h5>
+                  <div className="grid grid-cols-4 gap-1.5 pt-1 text-center">
+                    <div className="p-2 rounded-xl bg-white border border-amber-200/50 shadow-2xs">
+                      <span className="text-3xs text-slate-500 block">N</span>
+                      <strong className="text-xs text-amber-900 block mt-0.5">{result.soil.N}</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-white border border-amber-200/50 shadow-2xs">
+                      <span className="text-3xs text-slate-500 block">P</span>
+                      <strong className="text-xs text-amber-900 block mt-0.5">{result.soil.P}</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-white border border-amber-200/50 shadow-2xs">
+                      <span className="text-3xs text-slate-500 block">K</span>
+                      <strong className="text-xs text-amber-900 block mt-0.5">{result.soil.K}</strong>
+                    </div>
+                    <div className="p-2 rounded-xl bg-white border border-amber-200/50 shadow-2xs">
+                      <span className="text-3xs text-slate-500 block">pH</span>
+                      <strong className="text-xs text-amber-900 block mt-0.5">{result.soil.pH ?? result.soil.ph}</strong>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Why This Crop? Section */}

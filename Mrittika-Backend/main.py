@@ -10,6 +10,11 @@ from app.config import (
     API_VERSION,
     ALLOWED_ORIGINS,
 )
+from app.database import engine, Base
+from app.models.farmer import Farmer
+
+# Ensure tables are created
+Base.metadata.create_all(bind=engine)
 
 
 # =========================================================

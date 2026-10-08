@@ -16,7 +16,13 @@ export const CropPredictionPage = () => {
     setAiState('loading');
     setErrorMessage('');
     try {
-      const response = await cropApi.predictCrop(formData);
+      let response;
+      if (formData.isSmart !== false) {
+        response = await cropApi.smartCropPredict(formData);
+      } else {
+        response = await cropApi.predictCrop(formData);
+      }
+
       if (response && response.success) {
         setResult(response);
         setAiState('success');
@@ -72,8 +78,8 @@ export const CropPredictionPage = () => {
 
         {/* Prediction Form Card */}
         <Card
-          title={t('prediction.inputCardTitle', 'Input Soil & Environmental Telemetry')}
-          subtitle={t('prediction.inputCardSubtitle', 'All 7 parameters are evaluated simultaneously')}
+          title="Agro-Chemical & Environmental Input Parameters"
+          subtitle="Smart mode fetches live Open-Meteo weather by GPS; manual mode evaluates all 7 features."
           icon={Sparkles}
         >
           <PredictionForm
