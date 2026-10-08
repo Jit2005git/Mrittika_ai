@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
+import AgriChatbot from './AgriChatbot';
 
 export const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -21,6 +22,9 @@ export const DashboardLayout = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Mrittika AI n8n Floating Chatbot */}
+      <AgriChatbot />
     </div>
   );
 };

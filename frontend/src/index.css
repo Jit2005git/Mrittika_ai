@@ -39,3 +39,36 @@
   position: relative;
   background-clip: padding-box;
 }
+
+/* =========================================================
+   n8n Chat Widget Theme Overrides for Mrittika AI
+   ========================================================= */
+:root {
+  --chat--color--primary: #059669;
+  --chat--color--primary-shade-50: #047857;
+  --chat--color--primary--shade-100: #065f46;
+  --chat--color--secondary: #0d9488;
+  --chat--color-secondary-shade-50: #0f766e;
+  --chat--color-dark: #064e3b;
+  --chat--header--background: linear-gradient(135deg, #065f46 0%, #047857 50%, #0f766e 100%);
+  --chat--header--color: #ffffff;
+  --chat--toggle--background: #059669;
+  --chat--toggle--hover--background: #047857;
+  --chat--toggle--active--background: #065f46;
+  --chat--toggle--color: #ffffff;
+  --chat--toggle--size: 56px;
+  --chat--window--border-radius: 1.25rem;
+  --chat--border-radius: 0.75rem;
+  --chat--window--width: 380px;
+  --chat--window--height: 580px;
+  --chat--window--z-index: 9999;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --chat--window--width: calc(100vw - 1.5rem);
+    --chat--window--height: calc(100dvh - 5.5rem);
+    --chat--window--bottom: 0.75rem;
+    --chat--window--right: 0.75rem;
+  }
+}
