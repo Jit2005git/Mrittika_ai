@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../i18n/LanguageContext';
 
 export const LoginPage = () => {
-  const [email, setEmail] = useState('farmer@mrittika.ai');
+  const [email, setEmail] = useState('farmer_test_1@example.com');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,8 +39,8 @@ export const LoginPage = () => {
   };
 
   const fillDemoCredentials = () => {
-    setEmail('farmer@mrittika.ai');
-    setPassword('farmer123');
+    setEmail('farmer_test_1@example.com');
+    setPassword('password123');
     setErrorMessage('');
   };
 

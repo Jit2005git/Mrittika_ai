@@ -18,7 +18,7 @@ export const SignupPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const { signup } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -51,7 +51,7 @@ export const SignupPage = () => {
     }
 
     setIsLoading(true);
-    const result = await signup(formData.name, formData.email, formData.password);
+    const result = await signup(formData.name, formData.email, formData.password, language);
     setIsLoading(false);
 
     if (result.success) {
