@@ -99,10 +99,12 @@ The baseline test against the ML model serving layer was executed and verified a
   ```
 * **Expected Result:**
   * HTTP status 200 OK
-  * Response returning recommended crop prediction with confidence score or class label
-* **Actual Result:** *Execution pending.*
-* **HTTP Status:** *N/A*
-* **Status:** **NOT TESTED**
+  * Response returning recommended crop prediction with confidence score / top 3 probabilities
+* **Actual Result:**
+  * Valid payload: Returned HTTP `200 OK` with JSON response containing `"recommended_crop"` and `"top_3"` ranked probability distribution.
+  * Invalid payload test: Request with missing/malformed attributes correctly rejected with HTTP `422 Unprocessable Content`.
+* **HTTP Status:** `200 OK` (Valid) / `422 Unprocessable Content` (Validation test)
+* **Status:** **PASS**
 
 ---
 
@@ -235,26 +237,30 @@ The baseline test against the ML model serving layer was executed and verified a
 
 | Metric | Count | Details |
 | :--- | :--- | :--- |
-| **Passed** | 1 | `GET /api/v1/health/model` verified with 200 OK and valid ML artifacts |
-| **Failed** | 0 | No active failures in tested endpoints |
-| **Not Tested** | 9 | Crop Predict, Smart Crop Predict, 3 Weather routes, 4 Auth routes |
+| **Passed** | 2 | `GET /api/v1/health/model` and `POST /api/v1/crop-predict` (including 422 validation handling) |
+| **Failed** | 0 | No failures encountered |
+| **Not Tested** | 8 | Smart Crop Predict, 3 Weather routes, 4 Auth routes |
 | **Total Test Cases** | 10 | Complete API route surface |
 
 ### Bugs & Issues Found During QA Audit
 
-1. **Missing Default Database Configuration & Schema Migration:**
+1. **Scikit-learn StandardScaler Feature Names Warning:**
+   * **Issue:** When querying `POST /api/v1/crop-predict`, server logs output: `UserWarning: X does not have valid feature names, but StandardScaler was fitted with feature names`.
+   * **Impact:** Non-breaking warning occurring because `scaler.transform()` receives a raw 2D list/array rather than a DataFrame retaining column names.
+
+2. **Missing Default Database Configuration & Schema Migration:**
    * **Issue:** Application crashed immediately on start if `DATABASE_URL` environment variable was not explicitly set in the OS environment, because `.env` was missing and `app/database.py` expects a valid connection string.
    * **Impact:** Requires environment variables and table generation before authentication routes can execute.
    * **QA Workaround:** Configured local SQLite path in local test runner without altering code.
 
-2. **Redundant Route Path in Weather Module:**
+3. **Redundant Route Path in Weather Module:**
    * **Issue:** Route in `app/routes/weather.py` is declared with prefix `/weather` and included under `/api/v1`, creating `/api/v1/weather/weather`.
    * **Impact:** Non-standard route naming compared to `/api/v1/weather/current`.
 
-3. **External Network Reliance for Smart Prediction & Weather:**
+4. **External Network Reliance for Smart Prediction & Weather:**
    * **Issue:** `POST /api/v1/smart-crop-predict` and `GET /api/v1/weather/current` depend synchronously on external HTTP requests to Open-Meteo. If the third-party API is unreachable or rate-limited, requests return 502/503.
    * **Impact:** Robust mock fixtures or fallback data are recommended for offline and resilient testing.
 
-4. **Default Secret Key in Security Utilities:**
+5. **Default Secret Key in Security Utilities:**
    * **Issue:** `JWT_SECRET_KEY` in `app/config.py` defaults to `"mrittika_secret_key_12345"` if not provided via environment.
    * **Impact:** High security vulnerability if deployed without mandatory environment enforcement.
