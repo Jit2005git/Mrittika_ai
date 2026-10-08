@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { MOCK_WEATHER, MOCK_RECENT_PREDICTIONS, MOCK_ALERTS, MOCK_SOIL_DATA, CROP_DETAILS } from './mockData';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8001';
 
 // Axios instance with default configuration
 export const apiClient = axios.create({
@@ -31,7 +31,10 @@ apiClient.interceptors.response.use(
     let message = 'An unexpected error occurred. Please try again.';
 
     if (error.response) {
+      const status = error.response.status;
       const data = error.response.data;
+
+      // Check for structured backend message or detail
       if (data) {
         if (typeof data.detail === 'string') {
           message = data.detail;
@@ -42,13 +45,23 @@ apiClient.interceptors.response.use(
           message = data.message;
         }
       }
-      if (error.response.status === 401 && !error.config.url.includes('/auth/login')) {
-        // Token expired or invalid
+
+      // Handle specific HTTP statuses
+      if (status === 401 && !error.config?.url?.includes('/auth/login')) {
+        // Token expired or invalid session
         localStorage.removeItem('mrittika_token');
         localStorage.removeItem('mrittika_user');
+      } else if (status === 401 || status === 400) {
+        if (!data?.detail && !data?.message) {
+          message = status === 401
+            ? 'Authentication failed: Invalid email or password.'
+            : 'Bad request: Please check your input parameters.';
+        }
+      } else if (status >= 500) {
+        message = data?.message || `Server error (${status}): Mrittika AI backend encountered an error. Please try again later.`;
       }
     } else if (error.request) {
-      message = 'Unable to reach Mrittika AI server. Please check your network or verify the backend is running.';
+      message = `Network error: Unable to reach Mrittika AI backend at ${BASE_URL}. Please verify the backend is running and CORS allows this origin.`;
     } else {
       message = error.message;
     }
@@ -324,24 +337,37 @@ export const authApi = {
       password,
     };
 
-    const response = await apiClient.post('/api/v1/auth/login', payload);
+    const targetUrl = `${BASE_URL}/api/v1/auth/login`;
+    console.log(`[Mrittika Auth] Sending login request to: ${targetUrl}`);
 
-    if (response.data && response.data.success && response.data.data) {
-      const { access_token, farmer } = response.data.data;
-      if (access_token) {
-        localStorage.setItem('mrittika_token', access_token);
+    try {
+      const response = await apiClient.post('/api/v1/auth/login', payload);
+
+      console.log(`[Mrittika Auth] Login response received. Status: ${response.status}`);
+
+      if (response.data && response.data.success && response.data.data) {
+        const { access_token, farmer } = response.data.data;
+        if (access_token) {
+          localStorage.setItem('mrittika_token', access_token);
+        }
+        if (farmer) {
+          localStorage.setItem('mrittika_user', JSON.stringify(farmer));
+        }
+        return {
+          success: true,
+          user: farmer,
+          token: access_token,
+        };
       }
-      if (farmer) {
-        localStorage.setItem('mrittika_user', JSON.stringify(farmer));
-      }
-      return {
-        success: true,
-        user: farmer,
-        token: access_token,
-      };
+
+      // Backend responded with success: false (e.g. wrong credentials)
+      const failMsg = response.data?.message || 'Invalid email or password.';
+      console.warn(`[Mrittika Auth] Authentication rejected: ${failMsg}`);
+      throw new Error(failMsg);
+    } catch (error) {
+      console.error(`[Mrittika Auth] Login error. URL: ${targetUrl}, HTTP Status: ${error.status || error.response?.status || 'Network Error'}, Response:`, error.response?.data || error.message);
+      throw error;
     }
-
-    throw new Error(response.data?.message || 'Invalid email or password.');
   },
 
   /**
